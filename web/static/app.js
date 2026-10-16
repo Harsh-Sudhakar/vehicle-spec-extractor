@@ -336,8 +336,18 @@
     const r = state.result;
     const box = $("#viewCards");
     if (!r.specs.length) {
-      box.innerHTML = `<div class="none"><strong>No specification found</strong>
-        <p>Nothing in the retrieved passages answers this question, so nothing was invented. Try different wording, or check the retrieved context below.</p></div>`;
+      const name = esc(state.doc?.filename || "this manual");
+      const others = state.docs.filter((d) => d.doc_id !== state.doc?.doc_id);
+      const note = r.note
+        ? `<div class="ref-note"><span class="ref-tag">Manual says</span><p>${esc(r.note.text)}</p>
+             <a href="/api/documents/${esc(state.doc.doc_id)}/source.pdf#page=${r.note.page}" target="_blank" rel="noopener">p.${r.note.page} ↗</a></div>`
+        : "";
+      box.innerHTML = `<div class="none">
+        <strong>No value for this in <span class="mono">${name}</span></strong>
+        <p>None of the retrieved passages state it, so nothing was invented.${r.note ? " The manual points elsewhere:" : " Try different wording, or check the retrieved context below."}</p>
+        ${note}
+        ${others.length ? `<p class="try-other">Search another manual: ${others.map((d) => `<button type="button" class="tool" data-switch="${esc(d.doc_id)}">${esc(d.filename)}</button>`).join(" ")}</p>` : ""}
+      </div>`;
       return;
     }
     box.innerHTML = r.specs.map((s, i) => `
@@ -432,6 +442,8 @@
 
   // ----------------------------------------------------------------- evidence
   function onPick(e) {
+    const sw = e.target.closest("[data-switch]");
+    if (sw) { selectDoc(sw.dataset.switch); runQuery(); return; }
     const el = e.target.closest("[data-i]");
     if (el) openEvidence(Number(el.dataset.i));
   }

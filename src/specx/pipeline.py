@@ -95,8 +95,8 @@ def query(doc_id: str, question: str, top_k: int | None = None, offline: bool = 
     hits = retrieve(index, question, final_k=top_k, timings=timings)
 
     t = time.perf_counter()
-    specs, rejected, model, mode = extract_specs(question, hits, offline=offline)
+    specs, rejected, model, mode, note = extract_specs(question, hits, offline=offline)
     timings["extract"] = round((time.perf_counter() - t) * 1000, 1)
 
     return QueryResult(query=question, specs=specs, chunks=hits, rejected=rejected,
-                       timings_ms=timings, model=model, mode=mode)
+                       timings_ms=timings, model=model, mode=mode, note=note)

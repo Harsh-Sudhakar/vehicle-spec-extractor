@@ -8,7 +8,7 @@ SpecX extracts **vehicle specifications** (torque values, fluid capacities, pres
 ]
 ```
 
-Every answer is **grounded**: it carries the page it came from, the passage the model quoted, and a check that the value really appears in that passage. If the manual doesn't contain the answer, SpecX returns `[]` instead of guessing.
+Every answer is **grounded**: it carries the page it came from, the passage the model quoted, and a check that the value really appears in that passage. If the manual doesn't contain the answer, SpecX returns `[]` instead of guessing. When the manual instead points elsewhere (the F-150 workshop manual says tyre pressures are on the *Vehicle Certification label*), it shows that reference, with its page.
 
 It works on **any** text-based manual, not just one layout. It has been tested on two very different PDFs:
 
@@ -203,7 +203,7 @@ The gold set ([`eval/gold.jsonl`](eval/gold.jsonl)) has 21 questions checked by 
 | Item recall (expected values extracted) | **22/22 (100%)** | 14/22 (64%) |
 | Query accuracy | **21/21 (100%)** | 13/21 (62%) |
 | Negative question → `[]` | **1/1** | 1/1 |
-| Median latency | 7.6 s | 2.2 s |
+| Median latency | 6.2 s | 2.2 s |
 
 Both columns share the same retrieval, so the gap is in extraction. The rule-based baseline handles the F-150's regular `Nm | lb-ft | lb-in` tables but fails on all of the Figo's irregular tables: variant columns, units in table titles, codes and ranges. The LLM handles both without per-manual code. Full per-question results: [`eval/results_llm.md`](eval/results_llm.md), [`eval/results_offline.md`](eval/results_offline.md).
 

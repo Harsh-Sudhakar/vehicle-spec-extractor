@@ -348,6 +348,18 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .none { padding: 34px 20px; text-align: center; }
 .none strong { display: block; font-size: 19px; font-stretch: 110%; margin-bottom: 6px; }
 .none p { margin: 0 auto; max-width: 520px; color: var(--muted); font-size: 14px; }
+.none .mono { font-family: var(--f-mono); font-size: 16px; }
+.ref-note {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px 12px;
+  max-width: 620px; margin: 16px auto 0; padding: 12px 14px; text-align: left;
+  border: 1.5px solid var(--rule-strong); border-left: 4px solid var(--signal); background: var(--panel);
+}
+.ref-note p { margin: 0; max-width: none; color: var(--ink); font-size: 14px; }
+.ref-tag { font-family: var(--f-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--signal); }
+.ref-note a { font-family: var(--f-mono); font-size: 12px; font-weight: 700; color: var(--ink); border: 1.5px solid var(--rule-strong); padding: 3px 7px; text-decoration: none; white-space: nowrap; }
+.ref-note a:hover { background: var(--ink); color: var(--panel); }
+.try-other { margin-top: 16px !important; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; }
+@media (max-width: 600px) { .ref-note { grid-template-columns: 1fr; } }
 
 /* table */
 .tbl-wrap { overflow-x: auto; }

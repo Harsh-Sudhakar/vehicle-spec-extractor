@@ -26,19 +26,39 @@ log = logging.getLogger(__name__)
 
 def extract_specs(
     question: str, hits: list[RetrievedChunk], offline: bool = False
-) -> tuple[list[Spec], list[dict], str | None, str]:
-    """Return (specs, rejected, model_name, mode)."""
+) -> tuple[list[Spec], list[dict], str | None, str, dict | None]:
+    """Return (specs, rejected, model_name, mode, note)."""
     if not hits:
-        return [], [], None, "offline" if offline else "llm"
+        return [], [], None, "offline" if offline else "llm", None
     if offline or not llm_available():
-        return offline_extract(question, hits), [], None, "offline"
+        return offline_extract(question, hits), [], None, "offline", None
     try:
-        return (*_llm_extract(question, hits), get_settings().openrouter_model, "llm")
+        specs, rejected, note = _llm_extract(question, hits)
+        return specs, rejected, get_settings().openrouter_model, "llm", note
     except LLMUnavailable:
-        return offline_extract(question, hits), [], None, "offline"
+        return offline_extract(question, hits), [], None, "offline", None
 
 
-def _llm_extract(question: str, hits: list[RetrievedChunk]) -> tuple[list[Spec], list[dict]]:
+_REFERENCE = re.compile(r"\b(refer|see|label|placard|section|consult|indicated on|shown on|specified on)\b", re.I)
+_NOTE_STOP = frozenset("the a an and or of to for in on at is are be by with this that these from as it its your their not".split())
+
+
+def _note(data: dict, labels: dict[str, str], by_id: dict) -> dict | None:
+    """A 'the manual says to look elsewhere' note. Kept only if it is a real reference and is
+    grounded: most of its content words must come from the excerpt it cites."""
+    text = re.sub(r"\s*\[?C\d+\]?", "", str(data.get("note") or "")).strip()
+    label = str(data.get("note_chunk_id") or "").strip().strip("[]")
+    chunk = by_id.get(labels.get(label, label))
+    if not text or chunk is None or not _REFERENCE.search(text):
+        return None
+    words = [w for w in re.findall(r"[a-z0-9]+", text.lower()) if len(w) > 2 and w not in _NOTE_STOP]
+    hay = chunk.text.lower()
+    if not words or sum(w in hay for w in words) / len(words) < 0.6:
+        return None
+    return {"text": text[:300], "page": chunk.page, "chunk_id": chunk.id}
+
+
+def _llm_extract(question: str, hits: list[RetrievedChunk]) -> tuple[list[Spec], list[dict], dict | None]:
     user, labels = build_user_prompt(question, hits)
     data = chat_json(SYSTEM, user)
     raw = data.get("specs", []) if isinstance(data, dict) else []
@@ -62,7 +82,9 @@ def _llm_extract(question: str, hits: list[RetrievedChunk]) -> tuple[list[Spec],
             accepted.append(spec)
         else:
             rejected.append({"item": item, "reason": reason})
-    return dedupe(accepted), rejected
+    specs = dedupe(accepted)
+    note = None if specs or not isinstance(data, dict) else _note(data, labels, by_id)
+    return specs, rejected, note
 
 
 # --------------------------------------------------------------------------- offline

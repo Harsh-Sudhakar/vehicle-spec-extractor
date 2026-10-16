@@ -18,9 +18,10 @@ Rules
 7. variant: the engine / model / trim / drivetrain the value applies to when the excerpt states one (e.g. "1.4L Duratorq-TDCi", "4WD"); otherwise null.
 8. Be inclusive within the topic: "brake caliper bolts" means every caliper bolt torque present. Exclude specs about other components.
 9. chunk_id: the excerpt id (e.g. "C3"). source_quote: a short verbatim snippet (max 25 words) copied from that excerpt that contains the value.
+10. note: only when specs is empty AND an excerpt explicitly refers the reader elsewhere for this value (e.g. "set to the pressure on the Vehicle Certification (VC) label", "refer to Section 303-01"). Then give that reference in one sentence using the excerpt's own words, and set note_chunk_id to that excerpt. In every other case note is null — do not describe what the excerpts lack, and never mention excerpt ids.
 
 Output format (JSON only, no prose):
-{"specs": [{"component": "...", "spec_type": "...", "value": "...", "unit": "...", "alt_value": null, "alt_unit": null, "variant": null, "condition": null, "chunk_id": "C1", "source_quote": "..."}]}"""
+{"specs": [{"component": "...", "spec_type": "...", "value": "...", "unit": "...", "alt_value": null, "alt_unit": null, "variant": null, "condition": null, "chunk_id": "C1", "source_quote": "..."}], "note": null, "note_chunk_id": null}"""
 
 
 def build_user_prompt(question: str, hits: list[RetrievedChunk]) -> tuple[str, dict[str, str]]:

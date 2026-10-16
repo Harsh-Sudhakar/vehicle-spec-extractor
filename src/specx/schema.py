@@ -99,6 +99,8 @@ class QueryResult(BaseModel):
     timings_ms: dict[str, float] = {}
     model: str | None = None
     mode: Literal["llm", "offline"] = "llm"
+    # When nothing is found: where the manual says the value lives (e.g. "on the VC label")
+    note: dict | None = None
 
 
 class DocInfo(BaseModel):
