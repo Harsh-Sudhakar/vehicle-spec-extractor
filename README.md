@@ -249,13 +249,19 @@ The set is small (21 questions over 2 manuals), so treat it as a regression chec
 
 ## Deployment
 
-The repo ships a `Dockerfile` (FastAPI + UI, models downloaded at build time, port `7860`).
+The repo ships a `Dockerfile` (FastAPI + UI, embedding models downloaded at build time, listens on `$PORT`) and a [`render.yaml`](render.yaml) Blueprint.
 
-**Hugging Face Spaces (free, recommended):** create a *Docker* Space, push this repo to it, and add `OPENROUTER_API_KEY` under *Settings → Variables and secrets*. Any Docker host (Render, Railway, Fly.io, a VM) works the same way: set `OPENROUTER_API_KEY` and expose `$PORT`.
+**The live demo runs on Render's free plan:**
 
-Configuration (env vars, see `.env.example`): `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `DEFAULT_DOC`, `DEFAULT_QUERY`, `ENABLE_OCR`, `MAX_UPLOAD_MB`, `RATE_LIMIT_PER_MIN`, `DATA_DIR`. The key is read from the environment or a local `.env`, which is git-ignored. Never commit it.
+* **Manual data stays private.** Manuals are copyrighted, so they are not in git. The prebuilt F-150 index (chunks, FAISS index, source PDF) lives in a *private* Hugging Face dataset and is downloaded at start-up (`HF_DATA_REPO` + a read-only `HF_TOKEN`). The 852-page manual is never re-indexed on the server.
+* **Fits in 512 MB.** The cross-encoder reranker is switched off (`USE_RERANKER=false`), and retrieval falls back to the RRF order. The eval still scores 21/21 that way ([`eval/results_llm_no_rerank.md`](eval/results_llm_no_rerank.md)). Peak memory measured with this configuration is about 350 MB. Uploads are off (`ALLOW_UPLOAD=false`) because indexing a large manual needs more CPU/RAM than the free plan has.
+* **Cold starts.** The free instance sleeps after 15 minutes idle, so the first visit takes about a minute to wake.
 
-> Manuals are copyrighted, so they are **not** committed (`data/*.pdf` is git-ignored). Any PDF placed in `data/` is indexed automatically when the server starts.
+To deploy your own: *Render → New → Blueprint →* select this repo, then enter `OPENROUTER_API_KEY` and `HF_TOKEN` when prompted. Any other Docker host works the same way. With 2 GB+ RAM, leave the reranker and uploads on.
+
+Configuration (env vars, see `.env.example`): `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `USE_RERANKER`, `ALLOW_UPLOAD`, `HF_DATA_REPO`, `HF_TOKEN`, `DEFAULT_DOC`, `DEFAULT_QUERY`, `ENABLE_OCR`, `MAX_UPLOAD_MB`, `RATE_LIMIT_PER_MIN`, `DATA_DIR`. Keys are read from the environment or a local `.env`, which is git-ignored. Never commit them.
+
+> Locally, any PDF placed in `data/` is indexed automatically when the server starts.
 
 ---
 

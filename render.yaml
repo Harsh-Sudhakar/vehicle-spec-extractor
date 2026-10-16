@@ -1,0 +1,33 @@
+# Render Blueprint: New → Blueprint → select this repo.
+# Free plan = 512 MB RAM, so the cross-encoder reranker and uploads are off
+# (eval with USE_RERANKER=false: 21/21, see eval/results_llm_no_rerank.md).
+services:
+  - type: web
+    name: specx
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # secrets: Render asks for these when the Blueprint is created
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: HF_TOKEN            # read access to the private demo dataset below
+        sync: false
+      # demo data: prebuilt F-150 index, pulled at start-up
+      - key: HF_DATA_REPO
+        value: HarshSudhakar/specx-demo-data
+      - key: DEFAULT_DOC
+        value: f150-workshop-manual.pdf
+      - key: DEFAULT_QUERY
+        value: Torque for brake caliper bolts
+      # fit in 512 MB
+      - key: USE_RERANKER
+        value: "false"
+      - key: ALLOW_UPLOAD
+        value: "false"
+      - key: OPENROUTER_MODEL
+        value: deepseek/deepseek-v4-flash
+      - key: RATE_LIMIT_PER_MIN
+        value: "20"
