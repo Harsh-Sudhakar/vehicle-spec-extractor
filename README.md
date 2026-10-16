@@ -6,6 +6,10 @@
 
 > 🌐 **Live Demo:** Try it now at [https://specx-soqh.onrender.com](https://specx-soqh.onrender.com)
 
+<p align="center">
+  <img src="docs/demo-preview.png" alt="SpecX Query Console and Grounded Extraction" width="100%" />
+</p>
+
 
 SpecX extracts **vehicle specifications** (torque values, fluid capacities, pressures, clearances, wear limits, part numbers, fluid specs, …) from **automotive service manual PDFs** using **retrieval + an LLM**, and returns structured **JSON / CSV**:
 
@@ -290,3 +294,9 @@ Configuration (env vars, see `.env.example`): `OPENROUTER_API_KEY`, `OPENROUTER_
 5. **Larger gold set** across more manufacturers, with automatic regression runs in CI.
 6. **Incremental / parallel ingestion** (page-level multiprocessing, quantised embeddings) for very large manuals.
 7. **Semantic answer cache:** reuse answers for paraphrased questions, not just identical ones.
+
+---
+
+## Author
+
+* **Harsh Sudhakar** ([@Harsh-Sudhakar](https://github.com/Harsh-Sudhakar))
