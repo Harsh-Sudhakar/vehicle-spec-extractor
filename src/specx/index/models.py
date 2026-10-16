@@ -49,10 +49,12 @@ def embed_query(text: str) -> np.ndarray:
 def rerank(query: str, docs: list[str]) -> list[float]:
     if not docs:
         return []
-    return [float(s) for s in reranker().rerank(query, docs, batch_size=32)]
+    # small batches keep peak memory down; the cost in speed is negligible for 30 docs
+    return [float(s) for s in reranker().rerank(query, docs, batch_size=8)]
 
 
 def warmup() -> None:
     """Download / load models up front (used by the Docker build and server start-up)."""
     embed_query("warm up")
-    rerank("warm up", ["warm up"])
+    if get_settings().use_reranker:
+        rerank("warm up", ["warm up"])

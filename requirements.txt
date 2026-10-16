@@ -10,10 +10,11 @@ numpy>=1.26
 pydantic>=2.6
 pydantic-settings>=2.2
 rapidfuzz>=3.6
-# LLM providers (install the one you use)
-anthropic>=0.40
+# LLM via OpenRouter (OpenAI-compatible API)
 openai>=1.40
 httpx>=0.27
+# Optional: pull prebuilt demo indexes from a private Hugging Face dataset
+huggingface_hub>=0.24
 # API + UI
 fastapi>=0.110
 uvicorn>=0.29

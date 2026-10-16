@@ -94,6 +94,8 @@ def health():
         "rerank_model": s.rerank_model,
         "ocr": s.enable_ocr and ocr_available(),
         "max_upload_mb": s.max_upload_mb,
+        "reranker": s.use_reranker,
+        "allow_upload": s.allow_upload,
         "default_doc": s.default_doc,
         "default_query": s.default_query,
     }
@@ -114,6 +116,8 @@ def documents():
 async def upload(request: Request, background: BackgroundTasks, file: UploadFile = File(...)):
     _rate_limit(request, cost=3)
     s = get_settings()
+    if not s.allow_upload:
+        raise HTTPException(403, "Uploads are disabled on this demo.")
     if not (file.filename or "").lower().endswith(".pdf"):
         raise HTTPException(400, "Please upload a PDF file.")
     s.upload_dir.mkdir(parents=True, exist_ok=True)
@@ -194,8 +198,29 @@ def source(doc_id: str):
 
 
 # --------------------------------------------------------------------------- startup
+def _pull_prebuilt_indexes() -> None:
+    """Download prebuilt indexes from a (private) Hugging Face dataset, if configured.
+
+    The dataset holds one folder per document, exactly as written to data/indexes/<doc_id>/.
+    """
+    s = get_settings()
+    if not s.hf_data_repo:
+        return
+    from huggingface_hub import snapshot_download
+
+    s.index_dir.mkdir(parents=True, exist_ok=True)
+    snapshot_download(
+        repo_id=s.hf_data_repo,
+        repo_type="dataset",
+        local_dir=str(s.index_dir),
+        token=s.hf_token or None,
+        allow_patterns=["*/info.json", "*/chunks.jsonl", "*/dense.faiss", "*/source.pdf", "*/answers/*.json"],
+    )
+    log.info("pulled prebuilt indexes from %s: %s", s.hf_data_repo, [i.filename for i in DocIndex.list_infos()])
+
+
 def _bootstrap() -> None:
-    """Warm models and auto-ingest any PDFs dropped in data/ (handy for demos)."""
+    """Warm models and auto-ingest any PDFs dropped in data/ (handy for local demos)."""
     from .index.models import warmup
 
     try:
@@ -212,6 +237,11 @@ def _bootstrap() -> None:
 
 @app.on_event("startup")
 def _startup() -> None:
+    # Pulled before serving, so the first page load already lists the demo manual.
+    try:
+        _pull_prebuilt_indexes()
+    except Exception:
+        log.exception("could not pull prebuilt indexes")
     threading.Thread(target=_bootstrap, daemon=True).start()
 
 

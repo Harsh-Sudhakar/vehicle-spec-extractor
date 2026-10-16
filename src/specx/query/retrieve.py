@@ -36,6 +36,7 @@ def retrieve(
 ) -> list[RetrievedChunk]:
     s = get_settings()
     final_k = final_k or s.final_k
+    use_rerank = use_rerank and s.use_reranker
     timings = timings if timings is not None else {}
     t0 = time.perf_counter()
 
@@ -60,7 +61,12 @@ def retrieve(
             score += 0.25 if c.chunk_type == "table" else 0.0
             scored.append((i, score))
     else:
-        scored = [(i, fused[i]) for i in candidates]
+        # Without the cross-encoder: fused rank plus the same priors, scaled to RRF's range.
+        scored = []
+        for i in candidates:
+            c = index.chunks[i]
+            prior = (0.004 if c.has_spec else 0.0) + (0.002 if c.chunk_type == "table" else 0.0)
+            scored.append((i, fused[i] + prior))
 
     scored.sort(key=lambda x: x[1], reverse=True)
     timings["rerank"] = round((time.perf_counter() - t0) * 1000, 1)

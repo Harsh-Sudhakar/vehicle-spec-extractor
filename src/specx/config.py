@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     embed_model: str = "BAAI/bge-small-en-v1.5"
     rerank_model: str = "Xenova/ms-marco-MiniLM-L-6-v2"
 
+    # The cross-encoder adds ~150-300 MB of RAM; turn it off on 512 MB hosts (e.g. Render free).
+    use_reranker: bool = True
+    # Ingesting big manuals needs CPU/RAM a small host lacks; demos can ship prebuilt indexes.
+    allow_upload: bool = True
+
     # Retrieval sizes
     dense_k: int = 25
     sparse_k: int = 25
@@ -34,6 +39,11 @@ class Settings(BaseSettings):
     # Web app limits
     max_upload_mb: int = 60
     rate_limit_per_min: int = 20
+
+    # Optional: prebuilt indexes (+ source PDFs) kept in a private Hugging Face dataset, pulled
+    # at start-up so a hosted demo needs neither the manuals in git nor re-indexing on boot.
+    hf_data_repo: str = ""
+    hf_token: str = ""
 
     # What the UI opens with: a manual (filename or doc_id) and a question that is run on load
     default_doc: str = "f150-workshop-manual.pdf"

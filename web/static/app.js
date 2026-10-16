@@ -86,6 +86,8 @@
       $("#embedModel").textContent = h.embed_model.split("/").pop();
       $("#rerankModel").textContent = h.rerank_model.split("/").pop();
       $("#maxMb").textContent = h.max_upload_mb;
+      $("#dropzone").hidden = h.allow_upload === false;
+      if (h.reranker === false) $('#trace li[data-step="rerank"] span').textContent = "off (RRF order)";
     } catch {
       pill.classList.add("off");
       $(".label", pill).textContent = "server unreachable";
@@ -265,7 +267,7 @@
       traceTimers.forEach(clearTimeout);
       const t = r.timings_ms || {};
       trace.set("retrieve", "done", fmtMs(t.retrieve));
-      trace.set("rerank", "done", fmtMs(t.rerank));
+      trace.set("rerank", "done", state.health?.reranker === false ? "–" : fmtMs(t.rerank));
       trace.set("extract", "done", r.cached ? "cached" : fmtMs(t.extract));
       trace.set("validate", "done", `${r.specs.length}/${r.specs.length + r.rejected.length}`);
       state.result = r;
