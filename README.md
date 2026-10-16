@@ -27,6 +27,12 @@ pip install -r requirements.txt && pip install -e .
 cp .env.example .env            # add OPENROUTER_API_KEY
 ```
 
+**Manuals:** copy PDFs into `data/`. They are git-ignored (copyrighted) and indexed automatically when the server starts. The UI opens on `data/f150-workshop-manual.pdf` (change with `DEFAULT_DOC`); any other PDF can be uploaded from the UI.
+
+```bash
+cp "/path/to/sample-service-manual.pdf" data/f150-workshop-manual.pdf
+```
+
 **Web app** (upload a PDF, ask questions, export CSV/JSON, inspect evidence):
 
 ```bash
@@ -176,6 +182,8 @@ The prompt ([`query/prompts.py`](src/specx/query/prompts.py)) asks for JSON only
 * **Grounding check:** the value must literally appear in the excerpt it cites (after normalising whitespace, thousands separators and brackets). Entries that fail are **rejected** and shown in the UI. A confidence score also checks that the component name and quote match the excerpt.
 * **Normalisation:** `N·m → Nm`, `litres → L`, `gms → g`, units split out of values (`"1,420 ml"` → `1,420` + `ml`), spec types mapped to canonical names.
 * **Dedupe** across table and procedure mentions, preferring table rows.
+* **Nothing found:** returns `[]`. If the cited text points elsewhere ("set to the pressure on the VC label"), that reference is shown, and only if it is worded from a retrieved passage.
+* **Answer cache:** results are cached per (document, normalised question), in memory and on disk next to the index, and cleared on re-index. Repeated questions cost no LLM call.
 
 ### Output schema
 The four required fields come first; the rest are additions (dropped with `--minimal` or the UI toggle).
@@ -245,7 +253,7 @@ The repo ships a `Dockerfile` (FastAPI + UI, models downloaded at build time, po
 
 **Hugging Face Spaces (free, recommended):** create a *Docker* Space, push this repo to it, and add `OPENROUTER_API_KEY` under *Settings → Variables and secrets*. Any Docker host (Render, Railway, Fly.io, a VM) works the same way: set `OPENROUTER_API_KEY` and expose `$PORT`.
 
-Configuration (env vars, see `.env.example`): `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `ENABLE_OCR`, `MAX_UPLOAD_MB`, `RATE_LIMIT_PER_MIN`, `DATA_DIR`.
+Configuration (env vars, see `.env.example`): `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `DEFAULT_DOC`, `DEFAULT_QUERY`, `ENABLE_OCR`, `MAX_UPLOAD_MB`, `RATE_LIMIT_PER_MIN`, `DATA_DIR`. The key is read from the environment or a local `.env`, which is git-ignored. Never commit it.
 
 > Manuals are copyrighted, so they are **not** committed (`data/*.pdf` is git-ignored). Any PDF placed in `data/` is indexed automatically when the server starts.
 
@@ -256,7 +264,7 @@ Configuration (env vars, see `.env.example`): `OPENROUTER_API_KEY`, `OPENROUTER_
 * **Text only by design.** Specs that exist only inside diagrams or exploded views are not extracted. Image-only pages are skipped unless OCR is enabled, and OCR reads text but does not rebuild complex graphical grids (e.g. a tick-mark maintenance schedule).
 * **Borderless tables** that `find_tables()` misses are handled as prose. The LLM usually still reads them, but column meaning is weaker.
 * **Very broad questions** ("all engine specs") can exceed the top-8 context.
-* **Same component in several sections** (e.g. front vs rear brake disc shield bolts: 18 Nm vs 17 Nm) returns all matches with section and page, which is correct but needs the reader to pick the right one.
+* **Same component in several sections** (e.g. brake disc shield bolts: 17 Nm in *204-01A Front Suspension*, 18 Nm in *206-03 Front Disc Brake*) returns all matches with section and page, which is correct but needs the reader to pick the right one.
 * Ingestion of an 850-page manual takes a few minutes on CPU, almost all of it embedding. It runs once per file and is cached by content hash.
 
 ## Ideas for improvement
@@ -267,4 +275,4 @@ Configuration (env vars, see `.env.example`): `OPENROUTER_API_KEY`, `OPENROUTER_
 4. **Unit conversion & validation:** convert to a requested unit system and flag implausible values (e.g. torque in mm).
 5. **Larger gold set** across more manufacturers, with automatic regression runs in CI.
 6. **Incremental / parallel ingestion** (page-level multiprocessing, quantised embeddings) for very large manuals.
-7. **Answer caching** per (document, normalised question).
+7. **Semantic answer cache:** reuse answers for paraphrased questions, not just identical ones.

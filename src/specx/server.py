@@ -101,7 +101,13 @@ def health():
 
 @app.get("/api/documents")
 def documents():
-    return [i.model_dump() for i in DocIndex.list_infos()]
+    """Indexed manuals, with the configured default manual first, then by filename."""
+    default = get_settings().default_doc
+    infos = sorted(
+        DocIndex.list_infos(),
+        key=lambda i: (default not in (i.filename, i.doc_id), i.filename.lower()),
+    )
+    return [i.model_dump() for i in infos]
 
 
 @app.post("/api/documents")
