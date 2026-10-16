@@ -16,6 +16,7 @@
   const FULL = [...REQUIRED, "alt_value", "alt_unit", "variant", "condition", "section", "page", "source", "confidence", "source_quote"];
 
   const state = {
+    health: null,
     docs: [],
     doc: null,
     result: null,
@@ -77,6 +78,7 @@
     const pill = $("#llmStatus");
     try {
       const h = await api("/api/health");
+      state.health = h;
       pill.classList.toggle("on", h.llm);
       pill.classList.toggle("off", !h.llm);
       $(".label", pill).textContent = h.llm ? h.model : "offline extractor (no API key)";
@@ -99,8 +101,9 @@
       state.docs = [];
     }
     renderDocs();
-    const want = selectId || state.doc?.doc_id || store.get("specx-doc");
-    const pick = state.docs.find((d) => d.doc_id === want) || state.docs[0];
+    // explicit choice > current selection > configured default manual > first in list
+    const want = selectId || state.doc?.doc_id || state.health?.default_doc;
+    const pick = state.docs.find((d) => d.doc_id === want || d.filename === want) || state.docs[0];
     if (pick) selectDoc(pick.doc_id);
   }
 
@@ -130,7 +133,6 @@
 
   function selectDoc(id) {
     state.doc = state.docs.find((d) => d.doc_id === id) || null;
-    store.set("specx-doc", id);
     $$(".doc").forEach((b) => b.classList.toggle("active", b.dataset.id === id));
     const label = $("#activeDoc");
     label.textContent = state.doc ? state.doc.filename : "no manual selected";
@@ -270,7 +272,7 @@
       const t = r.timings_ms || {};
       trace.set("retrieve", "done", fmtMs(t.retrieve));
       trace.set("rerank", "done", fmtMs(t.rerank));
-      trace.set("extract", "done", fmtMs(t.extract));
+      trace.set("extract", "done", r.cached ? "cached" : fmtMs(t.extract));
       trace.set("validate", "done", `${r.specs.length}/${r.specs.length + r.rejected.length}`);
       state.result = r;
       state.selected = -1;
@@ -527,6 +529,16 @@
   // ----------------------------------------------------------------- boot
   const savedView = store.get("specx-view");
   if (savedView) showView(savedView, true);
-  loadHealth();
-  loadDocs();
+
+  // Open on the default manual with the default question already answered (served from
+  // the server's answer cache after the first run, so it costs no LLM call per visit).
+  (async () => {
+    await loadHealth();
+    await loadDocs();
+    const q = state.health?.default_query;
+    if (q && state.doc) {
+      $("#queryInput").value = q;
+      runQuery();
+    }
+  })();
 })();

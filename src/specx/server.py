@@ -94,6 +94,8 @@ def health():
         "rerank_model": s.rerank_model,
         "ocr": s.enable_ocr and ocr_available(),
         "max_upload_mb": s.max_upload_mb,
+        "default_doc": s.default_doc,
+        "default_query": s.default_query,
     }
 
 

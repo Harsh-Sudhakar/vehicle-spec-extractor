@@ -68,7 +68,7 @@ def main() -> None:
         if g["doc"] not in docs:
             continue
         t = time.perf_counter()
-        r = query(docs[g["doc"]], g["query"], offline=args.offline)
+        r = query(docs[g["doc"]], g["query"], offline=args.offline, use_cache=False)
         latencies.append(time.perf_counter() - t)
         pages = {h.chunk.page for h in r.chunks}
         if g["match"] == "none":

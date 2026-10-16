@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     max_upload_mb: int = 60
     rate_limit_per_min: int = 20
 
+    # What the UI opens with: a manual (filename or doc_id) and a question that is run on load
+    default_doc: str = "f150-workshop-manual.pdf"
+    default_query: str = "Torque for brake caliper bolts"
+
     @property
     def index_dir(self) -> Path:
         return self.data_dir / "indexes"

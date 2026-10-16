@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import shutil
 import threading
 import time
@@ -56,6 +57,11 @@ def ingest(pdf_path: str | Path, filename: str | None = None, progress: Progress
         has_outline=stats.has_outline,
         title=title,
     )
+    # a rebuilt index invalidates any cached answers for this document
+    shutil.rmtree(DocIndex.dir_for(doc_id) / "answers", ignore_errors=True)
+    with _cache_lock:
+        for k in [k for k in _answers if k[0] == doc_id]:
+            del _answers[k]
     index = DocIndex.build(info, chunks, progress=progress)
     info.ingest_ms = round((time.perf_counter() - t0) * 1000)
     index.info = info
@@ -88,7 +94,45 @@ def source_pdf(doc_id: str) -> Path:
     return DocIndex.dir_for(doc_id) / "source.pdf"
 
 
-def query(doc_id: str, question: str, top_k: int | None = None, offline: bool = False) -> QueryResult:
+_answers: "OrderedDict[tuple, QueryResult]" = OrderedDict()
+_ANSWER_CACHE_SIZE = 256
+
+
+def query(doc_id: str, question: str, top_k: int | None = None, offline: bool = False,
+          use_cache: bool = True) -> QueryResult:
+    """Answer a question. Results are cached per (document, normalised question), so the
+    UI's default question and repeated questions cost no extra LLM call."""
+    norm_q = " ".join(question.lower().split())
+    key = (doc_id, norm_q, top_k, offline)
+    disk = DocIndex.dir_for(doc_id) / "answers"
+    disk_file = disk / f"{hashlib.sha1(f'{norm_q}|{top_k}'.encode()).hexdigest()[:16]}.json"
+    if use_cache:
+        with _cache_lock:
+            if key in _answers:
+                _answers.move_to_end(key)
+                return _answers[key].model_copy(update={"cached": True})
+        if not offline and disk_file.exists():
+            try:
+                result = QueryResult.model_validate_json(disk_file.read_text(encoding="utf-8"))
+                with _cache_lock:
+                    _answers[key] = result
+                return result.model_copy(update={"cached": True})
+            except ValueError:
+                disk_file.unlink(missing_ok=True)
+
+    result = _run_query(doc_id, question, top_k, offline)
+    # Only cache successful LLM runs; an offline fallback should not stick once a key is set.
+    if use_cache and result.mode == "llm":
+        with _cache_lock:
+            _answers[key] = result
+            while len(_answers) > _ANSWER_CACHE_SIZE:
+                _answers.popitem(last=False)
+        disk.mkdir(parents=True, exist_ok=True)
+        disk_file.write_text(result.model_dump_json(), encoding="utf-8")
+    return result
+
+
+def _run_query(doc_id: str, question: str, top_k: int | None, offline: bool) -> QueryResult:
     index = load_index(doc_id)
     timings: dict[str, float] = {}
 

@@ -101,6 +101,7 @@ class QueryResult(BaseModel):
     mode: Literal["llm", "offline"] = "llm"
     # When nothing is found: where the manual says the value lives (e.g. "on the VC label")
     note: dict | None = None
+    cached: bool = False
 
 
 class DocInfo(BaseModel):
