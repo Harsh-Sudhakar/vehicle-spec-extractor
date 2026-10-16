@@ -1,5 +1,12 @@
 # SpecX — Vehicle Specification Extraction from Service Manuals
 
+[![Live Demo](https://img.shields.io/badge/Render-Live_Demo-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://specx-soqh.onrender.com)
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+
+> 🌐 **Live Demo:** Try it now at [https://specx-soqh.onrender.com](https://specx-soqh.onrender.com)
+
+
 SpecX extracts **vehicle specifications** (torque values, fluid capacities, pressures, clearances, wear limits, part numbers, fluid specs, …) from **automotive service manual PDFs** using **retrieval + an LLM**, and returns structured **JSON / CSV**:
 
 ```json
@@ -33,7 +40,7 @@ cp .env.example .env            # add OPENROUTER_API_KEY
 cp "/path/to/sample-service-manual.pdf" data/f150-workshop-manual.pdf
 ```
 
-**Web app** (upload a PDF, ask questions, export CSV/JSON, inspect evidence):
+**Web app** (try the [Live Demo](https://specx-soqh.onrender.com) or run locally to upload custom PDFs):
 
 ```bash
 specx serve --port 8000         # → http://localhost:8000
@@ -251,7 +258,8 @@ The set is small (21 questions over 2 manuals), so treat it as a regression chec
 
 The repo ships a `Dockerfile` (FastAPI + UI, embedding models downloaded at build time, listens on `$PORT`) and a [`render.yaml`](render.yaml) Blueprint.
 
-**The live demo runs on Render's free plan:**
+**The live demo runs on Render's free plan:** 🌐 [https://specx-soqh.onrender.com](https://specx-soqh.onrender.com)
+
 
 * **Manual data stays private.** Manuals are copyrighted, so they are not in git. The prebuilt F-150 index (chunks, FAISS index, source PDF) lives in a *private* Hugging Face dataset and is downloaded at start-up (`HF_DATA_REPO` + a read-only `HF_TOKEN`). The 852-page manual is never re-indexed on the server.
 * **Fits in 512 MB.** The cross-encoder reranker is switched off (`USE_RERANKER=false`), and retrieval falls back to the RRF order. The eval still scores 21/21 that way ([`eval/results_llm_no_rerank.md`](eval/results_llm_no_rerank.md)). Peak memory measured with this configuration is about 350 MB. Uploads are off (`ALLOW_UPLOAD=false`) because indexing a large manual needs more CPU/RAM than the free plan has.
