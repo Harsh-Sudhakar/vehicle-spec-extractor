@@ -218,12 +218,6 @@
   }
 
   // ----------------------------------------------------------------- query
-  $("#chips").addEventListener("click", (e) => {
-    const b = e.target.closest("button[data-q]");
-    if (!b) return;
-    $("#queryInput").value = b.dataset.q;
-    runQuery();
-  });
   $("#queryForm").addEventListener("submit", (e) => { e.preventDefault(); runQuery(); });
 
   const trace = {
@@ -318,7 +312,6 @@
     notice.classList.toggle("muted", r.mode !== "offline" && !!r.rejected.length);
 
     renderCards();
-    renderTable();
     renderJson();
     renderContext();
   }
@@ -372,14 +365,6 @@
       </article>`).join("");
   }
 
-  function renderTable() {
-    const data = rows();
-    if (!data.length) { $("#viewTable").innerHTML = `<div class="none"><strong>No rows</strong></div>`; return; }
-    const cols = Object.keys(data[0]).filter((c) => c !== "source_quote");
-    $("#viewTable").innerHTML = `<div class="tbl-wrap"><table class="tbl"><thead><tr>${cols.map((c) => `<th>${esc(c)}</th>`).join("")}</tr></thead>
-      <tbody>${data.map((row, i) => `<tr data-i="${i}">${cols.map((c) => `<td class="${c === "value" ? "num" : ""}">${esc(row[c] ?? "")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
-  }
-
   function renderJson() {
     $("#viewJson").textContent = JSON.stringify(rows(), null, 2);
   }
@@ -407,10 +392,10 @@
 
   // views
   function showView(v, silent) {
+    if (v !== "json") v = "cards"; // also maps a remembered, now-removed "table" view
     state.view = v;
     $$("#viewSeg button").forEach((b) => b.classList.toggle("on", b.dataset.view === v));
     $("#viewCards").hidden = v !== "cards";
-    $("#viewTable").hidden = v !== "table";
     $("#viewJson").hidden = v !== "json";
     if (!silent) store.set("specx-view", v);
   }
@@ -420,7 +405,7 @@
   });
   $("#requiredOnly").addEventListener("change", (e) => {
     state.requiredOnly = e.target.checked;
-    if (state.result) { renderTable(); renderJson(); }
+    if (state.result) renderJson();
   });
 
   // exports
@@ -450,7 +435,6 @@
     if (el) openEvidence(Number(el.dataset.i));
   }
   $("#viewCards").addEventListener("click", onPick);
-  $("#viewTable").addEventListener("click", onPick);
   $("#viewCards").addEventListener("keydown", (e) => { if (e.key === "Enter") onPick(e); });
 
   function markValue(text, value) {

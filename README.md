@@ -232,8 +232,8 @@ The set is small (21 questions over 2 manuals), so treat it as a regression chec
 ## Web UI
 
 * **Manuals library:** upload a PDF and watch Parse → Clean → Chunk → Embed progress. Each manual shows its structure source (outline or inferred) and how many TOC, image-only and blank pages were skipped.
-* **Query console** with spec-type shortcuts and a **pipeline trace** showing real timings for retrieve / rerank / extract and how many candidates passed the grounding check.
-* **Spec sheet** with Sheet / Table / JSON views, a "4 required fields" toggle, and CSV / JSON export.
+* **Query console** with a **pipeline trace** showing real timings for retrieve / rerank / extract and how many candidates passed the grounding check.
+* **Results** as a readable Sheet or as the raw JSON output, a "4 required fields" toggle, and CSV / JSON export.
 * **Evidence panel:** for any spec, the value, the model's quote, the cited passage with the value marked, and the **rendered source page with the match highlighted**.
 * **Retrieved context:** the top chunks with fused score and their dense / BM25 ranks, so retrieval can be inspected directly.
 

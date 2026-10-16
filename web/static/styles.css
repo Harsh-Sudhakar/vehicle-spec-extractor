@@ -230,14 +230,6 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .run:hover { filter: brightness(1.05); }
 .run:disabled { opacity: .55; cursor: progress; }
 
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chips button {
-  border: 1.5px solid var(--rule); background: var(--panel-2); padding: 5px 10px 5px 8px;
-  font-family: var(--f-mono); font-size: 12px; display: inline-flex; align-items: center; gap: 6px;
-}
-.chips button::before { content: ""; width: 6px; height: 6px; background: var(--signal); }
-.chips button:hover { border-color: var(--rule-strong); }
-
 /* trace */
 .trace { list-style: none; padding: 0; margin: 2px 0 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
 .trace li {
@@ -361,13 +353,6 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .try-other { margin-top: 16px !important; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; }
 @media (max-width: 600px) { .ref-note { grid-template-columns: 1fr; } }
 
-/* table */
-.tbl-wrap { overflow-x: auto; }
-table.tbl { width: 100%; border-collapse: collapse; font-family: var(--f-mono); font-size: 12.5px; }
-.tbl th { text-align: left; padding: 9px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; background: var(--panel); border-bottom: 1.5px solid var(--rule-strong); white-space: nowrap; }
-.tbl td { padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
-.tbl tr:hover td { background: var(--panel); cursor: pointer; }
-.tbl td.num { font-weight: 700; }
 
 .code { margin: 0; padding: 16px; background: var(--code-bg); color: var(--code-ink); font-size: 12.5px; line-height: 1.55; overflow: auto; max-height: 520px; }
 
