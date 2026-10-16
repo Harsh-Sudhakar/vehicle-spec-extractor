@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.env
+.cache/
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+
+# manuals (copyrighted), indexes, uploads and model cache are local-only
+data/*
+!data/.gitkeep

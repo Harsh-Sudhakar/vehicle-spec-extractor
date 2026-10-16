@@ -1,0 +1,21 @@
+{"doc": "f150", "query": "Torque for brake caliper bolts", "match": "all", "page": 636, "expect": [{"value": "250", "unit": "Nm"}, {"value": "35", "unit": "Nm"}, {"value": "37", "unit": "Nm"}], "kind": "table"}
+{"doc": "f150", "query": "front brake fluid capacity", "match": "all", "page": 636, "expect": [{"value": "1420", "unit": "ml"}], "kind": "table"}
+{"doc": "f150", "query": "minimum front brake disc thickness", "match": "all", "page": 636, "expect": [{"value": "32", "unit": "mm"}], "kind": "table"}
+{"doc": "f150", "query": "brake pad minimum thickness", "match": "all", "page": 636, "expect": [{"value": "3.0", "unit": "mm"}], "kind": "table"}
+{"doc": "f150", "query": "lower ball joint nut torque", "match": "all", "page": 24, "expect": [{"value": "175", "unit": "Nm"}], "kind": "table"}
+{"doc": "f150", "query": "wheel speed sensor bolt torque front suspension", "match": "all", "page": 24, "expect": [{"value": "18", "unit": "Nm"}], "kind": "table"}
+{"doc": "f150", "query": "tie-rod end nut torque", "match": "all", "page": 24, "expect": [{"value": "115", "unit": "Nm"}], "kind": "table"}
+{"doc": "f150", "query": "brake master cylinder nut torque", "match": "all", "page": 696, "expect": [{"value": "25", "unit": "Nm"}], "kind": "table"}
+{"doc": "f150", "query": "camber adjustment cam bolt nut tightening torque", "match": "all", "page": 14, "expect": [{"value": "350", "unit": "Nm"}], "kind": "prose"}
+{"doc": "f150", "query": "stabilizer bar link nut torque", "match": "any", "page": 24, "expect": [{"value": "70", "unit": "Nm"}, {"value": "80", "unit": "Nm"}], "kind": "table+prose"}
+{"doc": "figo", "query": "engine oil capacity for the diesel including filter", "match": "all", "page": 88, "expect": [{"value": "3.8", "unit": "L"}], "kind": "table"}
+{"doc": "figo", "query": "rear tyre pressure when laden", "match": "all", "page": 100, "expect": [{"value": "2.82", "unit": "bar"}], "kind": "table"}
+{"doc": "figo", "query": "brake fluid specification", "match": "all", "page": 87, "expect": [{"value": "WSS-M6C57-A2"}], "kind": "table"}
+{"doc": "figo", "query": "spark plug gap", "match": "all", "page": 88, "expect": [{"value": "1.3", "unit": "mm"}], "kind": "table"}
+{"doc": "figo", "query": "fuel tank capacity", "match": "all", "page": 87, "expect": [{"value": "45", "unit": "L"}], "kind": "table"}
+{"doc": "figo", "query": "engine idle speed", "match": "all", "page": 88, "expect": [{"value": "750"}], "kind": "table"}
+{"doc": "figo", "query": "gross vehicle weight of the diesel", "match": "all", "page": 102, "expect": [{"value": "1510 to 1550", "unit": "kg"}], "kind": "table"}
+{"doc": "figo", "query": "exhaust valve clearance for the petrol engine", "match": "all", "page": 89, "expect": [{"value": "0.30", "unit": "mm"}], "kind": "table"}
+{"doc": "figo", "query": "oil filter part number 1.2L Duratec", "match": "all", "page": 89, "expect": [{"value": "EFL 600"}], "kind": "table"}
+{"doc": "figo", "query": "petrol engine cooling system capacity", "match": "all", "page": 87, "expect": [{"value": "5", "unit": "L"}], "kind": "table"}
+{"doc": "figo", "query": "torque for brake caliper bolts", "match": "none", "page": null, "expect": [], "kind": "negative"}
