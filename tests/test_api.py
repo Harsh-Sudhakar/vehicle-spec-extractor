@@ -62,6 +62,12 @@ def test_page_render_and_highlight(client):
     assert client.get(f"/api/documents/{doc_id}/pages/99.png").status_code == 404
 
 
+def test_ui_files_are_always_revalidated(client):
+    for path in ("/", "/app.js", "/styles.css"):
+        assert client.get(path).headers["cache-control"] == "no-cache"
+    assert client.get("/api/health").headers.get("cache-control") != "no-cache"
+
+
 def test_non_pdf_upload_is_rejected(client):
     r = client.post("/api/documents", files={"file": ("notes.txt", b"hello")})
     assert r.status_code == 400

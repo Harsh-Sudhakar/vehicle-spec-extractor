@@ -37,6 +37,16 @@ STATIC_DIR = Path(__file__).resolve().parents[2] / "web" / "static"
 
 app = FastAPI(title="SpecX", version=__version__)
 
+
+@app.middleware("http")
+async def _revalidate_ui(request: Request, call_next):
+    """Make browsers re-check the UI files on every load (a cheap 304 when unchanged), so
+    a redeploy never leaves visitors running an old app.js against a new API."""
+    response = await call_next(request)
+    if not request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 # --------------------------------------------------------------------------- jobs
 _jobs: dict[str, dict] = {}
 _ingest_lock = threading.Lock()  # one ingestion at a time keeps memory predictable
@@ -189,7 +199,7 @@ async def upload(request: Request, background: BackgroundTasks, file: UploadFile
         raise HTTPException(403, "Uploads are disabled on this demo.")
     owner = _visitor(request)
     if owner is None:
-        raise HTTPException(400, "Missing visitor id - reload the page and try again.")
+        raise HTTPException(400, "Your browser has an old copy of this page. Refresh it (Cmd/Ctrl+Shift+R) and upload again.")
     if not (file.filename or "").lower().endswith(".pdf"):
         raise HTTPException(400, "Please upload a PDF file.")
     _purge_expired()
