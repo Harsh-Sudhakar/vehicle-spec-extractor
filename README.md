@@ -11,13 +11,40 @@
 </p>
 
 
-SpecX extracts **vehicle specifications** (torque values, fluid capacities, pressures, clearances, wear limits, part numbers, fluid specs, …) from **automotive service manual PDFs** using **retrieval + an LLM**, and returns structured **JSON / CSV**:
+SpecX extracts **vehicle specifications** (torque values, fluid capacities, pressures, clearances, wear limits, part numbers, fluid specs, …) from **automotive service manual PDFs** using **retrieval + an LLM**, and returns structured **JSON / CSV**.
+
+One record from *"Torque for brake caliper bolts"* on the F-150 manual (the full answer has 5, front and rear calipers):
 
 ```json
 [
-  { "component": "Brake caliper flow bolt", "spec_type": "Torque", "value": "35", "unit": "Nm" }
+  {
+    "component": "Brake caliper anchor plate bolts",
+    "spec_type": "Torque",
+    "value": "250",
+    "unit": "Nm",
+    "alt_value": "184",
+    "alt_unit": "lb-ft",
+    "variant": null,
+    "condition": null,
+    "section": "SECTION 206-03: Front Disc Brake",
+    "page": 636,
+    "source": "table",
+    "confidence": 1,
+    "source_quote": "Brake caliper anchor plate bolts | Nm: 250 | lb-ft: 184"
+  }
 ]
 ```
+
+The first four fields are the assignment's required output (`--minimal` / the UI's "4 required fields" toggle returns only those). The rest is provenance: the imperial equivalent, the section and page, whether the value came from a table or procedure text, a grounding score, and the exact source text the value was copied from.
+
+### Results at a glance
+
+| | |
+|---|---|
+| **Accuracy** | **21/21** hand-checked questions correct with the LLM pipeline vs **13/21** (62%) for a rule-based baseline on the same retrieval ([details](#evaluation)) |
+| **Generalisation** | Tested on **two very different manuals**: an 852-page workshop manual and a 114-page owner's manual |
+| **Grounding** | Every value must literally appear in the passage it cites, or it is rejected. Questions the manual can't answer return `[]` |
+| **Live demo** | [specx-soqh.onrender.com](https://specx-soqh.onrender.com), Render free tier (first load can take ~1 min to wake up) |
 
 Every answer is **grounded**: it carries the page it came from, the passage the model quoted, and a check that the value really appears in that passage. If the manual doesn't contain the answer, SpecX returns `[]` instead of guessing. When the manual instead points elsewhere (the F-150 workshop manual says tyre pressures are on the *Vehicle Certification label*), it shows that reference, with its page.
 
@@ -121,7 +148,7 @@ src/specx/
   cli.py                `specx` command
 web/static/             UI (vanilla HTML/CSS/JS, no build step)
 eval/                   gold set + evaluation script
-tests/                  unit tests (no models / network needed)
+tests/                  40 unit + integration tests on a generated PDF (no manual, model or network needed)
 ```
 
 ---

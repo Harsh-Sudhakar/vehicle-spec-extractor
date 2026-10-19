@@ -13,6 +13,10 @@ from dataclasses import dataclass, field
 
 import pymupdf
 
+# PyMuPDF prints an install suggestion for its optional layout add-on on first use; silence it.
+if hasattr(pymupdf, "no_recommend_layout"):
+    pymupdf.no_recommend_layout()
+
 # Fonts whose glyphs are bullets / symbols that decode to stray letters (e.g. "z").
 _SYMBOL_FONT = re.compile(r"dingbat|symbol|wingding", re.I)
 
