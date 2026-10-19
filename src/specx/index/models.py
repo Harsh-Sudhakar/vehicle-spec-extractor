@@ -35,10 +35,7 @@ def _normalise(m: np.ndarray) -> np.ndarray:
     return (m / np.clip(norms, 1e-12, None)).astype("float32")
 
 
-def embed_passages(texts: list[str], batch_size: int | None = None) -> np.ndarray:
-    # Small batches: ONNX pads every text in a batch to the longest one, so a batch of 16
-    # chunks costs ~330 MB extra RAM and is *slower*; batch 1 adds ~15 MB (measured).
-    batch_size = batch_size or get_settings().embed_batch_size
+def embed_passages(texts: list[str], batch_size: int = 16) -> np.ndarray:
     vecs = list(embedder().passage_embed(texts, batch_size=batch_size))
     return _normalise(np.vstack(vecs))
 

@@ -152,6 +152,11 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .dz-text strong { font-weight: 700; font-stretch: 110%; }
 .dz-text span { color: var(--muted); font-size: 12px; }
 
+.upload-note {
+  margin: -6px 0 0; padding: 8px 10px; font-size: 12px; line-height: 1.45; color: var(--ink-2);
+  border-left: 3px solid var(--signal); background: var(--signal-soft);
+}
+.upload-note b { color: var(--ink); }
 .ingest { border: 1.5px solid var(--rule-strong); padding: 12px; background: var(--panel-2); }
 .ingest-head { display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 12px; gap: 8px; }
 .ingest-file { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -186,15 +191,6 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .doc-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); }
 .doc-meta b { font-weight: 700; }
 .doc-badge { padding: 0 5px; border: 1px solid var(--rule); color: var(--muted); }
-.docs li { position: relative; }
-.doc-owner { display: flex; gap: 8px; align-items: center; margin-top: 7px; font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
-.own { text-transform: uppercase; letter-spacing: .08em; font-weight: 700; padding: 1px 6px; border: 1px solid var(--rule); }
-.own.mine { color: var(--signal); border-color: var(--signal); }
-.doc-del {
-  position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; display: grid; place-items: center;
-  border: 1.5px solid var(--rule); background: var(--panel-2); font-size: 11px; line-height: 1; color: var(--muted);
-}
-.doc-del:hover { border-color: var(--bad); color: var(--bad); }
 .docs-empty { margin: 0; color: var(--muted); font-size: 13px; }
 
 .lib-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--rule); display: grid; gap: 5px; }
@@ -455,4 +451,3 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
-.docs li:has(.doc-del) .doc { padding-right: 38px; }

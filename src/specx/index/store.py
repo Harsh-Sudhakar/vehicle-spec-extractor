@@ -43,7 +43,7 @@ class DocIndex:
         self.info = info
         self.chunks = chunks
         self.dense = dense
-        self.bm25 = BM25Okapi([tokenize(c.embed_text()) for c in chunks]) if chunks else None
+        self.bm25 = BM25Okapi([tokenize(c.embed_text()) for c in chunks])
         self.by_id = {c.id: c for c in chunks}
 
     # ------------------------------------------------------------------ build
@@ -87,15 +87,6 @@ class DocIndex:
         return cls(info, chunks, dense)
 
     @classmethod
-    def read_info(cls, doc_id: str) -> DocInfo:
-        """Metadata only (no chunks or vectors), for cheap access checks."""
-        return DocInfo.model_validate_json((cls.dir_for(doc_id) / "info.json").read_text(encoding="utf-8"))
-
-    @classmethod
-    def write_info(cls, info: DocInfo) -> None:
-        (cls.dir_for(info.doc_id) / "info.json").write_text(info.model_dump_json(indent=2), encoding="utf-8")
-
-    @classmethod
     def exists(cls, doc_id: str) -> bool:
         d = cls.dir_for(doc_id)
         return (d / "info.json").exists() and (d / "dense.faiss").exists()
@@ -125,7 +116,7 @@ class DocIndex:
 
     def sparse_search(self, query: str, k: int) -> list[tuple[int, float]]:
         toks = tokenize(query)
-        if not toks or self.bm25 is None:
+        if not toks or not self.chunks:
             return []
         scores = self.bm25.get_scores(toks)
         top = np.argsort(scores)[::-1][:k]

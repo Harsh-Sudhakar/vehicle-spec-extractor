@@ -116,11 +116,3 @@ class DocInfo(BaseModel):
     has_outline: bool = False
     title: str | None = None
     ingest_ms: float = 0
-    # Web uploads only: hashed ids of the browsers that uploaded this file, and when.
-    # Manuals without uploaded_at are shared demo manuals, visible to everyone.
-    owners: list[str] = []
-    uploaded_at: float | None = None
-
-    @property
-    def is_upload(self) -> bool:
-        return self.uploaded_at is not None
