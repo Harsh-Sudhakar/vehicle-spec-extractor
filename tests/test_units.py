@@ -104,3 +104,19 @@ def test_dedupe_prefers_table_source():
     b = Spec(component="Lower ball joint nut", spec_type="Torque", value="175", unit="Nm", source="table", confidence=0.8)
     out = dedupe([a, b])
     assert len(out) == 1 and out[0].source == "table"
+
+
+# ------------------------------------------------------------------ hosting
+def test_cpu_quota_from_cgroup_files(tmp_path):
+    from specx.index.models import cpu_quota
+
+    (tmp_path / "cpu.max").write_text("10000 100000\n")          # Render free: 0.1 CPU (cgroup v2)
+    assert cpu_quota(tmp_path) == 0.1
+    (tmp_path / "cpu.max").write_text("max 100000\n")            # no limit
+    assert cpu_quota(tmp_path) is None
+    v1 = tmp_path / "v1"
+    (v1 / "cpu").mkdir(parents=True)
+    (v1 / "cpu" / "cpu.cfs_quota_us").write_text("50000")        # cgroup v1: 0.5 CPU
+    (v1 / "cpu" / "cpu.cfs_period_us").write_text("100000")
+    assert cpu_quota(v1) == 0.5
+    assert cpu_quota(tmp_path / "missing") is None               # e.g. macOS

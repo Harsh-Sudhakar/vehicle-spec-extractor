@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 
 from . import __version__, pipeline
 from .config import get_settings
+from .index.models import cpu_quota, model_threads
 from .index.store import DocIndex
 from .ingest.ocr import ocr_available
 from .query.llm import llm_available
@@ -105,6 +106,8 @@ def health():
         "ocr": s.enable_ocr and ocr_available(),
         "max_upload_mb": s.max_upload_mb,
         "reranker": s.use_reranker,
+        "cpu_quota": cpu_quota(),
+        "model_threads": model_threads(),
         "allow_upload": s.allow_upload,
         "default_doc": s.default_doc,
         "default_query": s.default_query,

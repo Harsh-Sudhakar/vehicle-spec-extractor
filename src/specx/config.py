@@ -21,6 +21,8 @@ class Settings(BaseSettings):
 
     # The cross-encoder adds ~150-300 MB of RAM; turn it off on 512 MB hosts (e.g. Render free).
     use_reranker: bool = True
+    embed_batch_size: int = 1
+    embed_threads: int = 0  # 0 = match the container's CPU quota (see index/models.py)
     # Ingesting big manuals needs CPU/RAM a small host lacks; demos can ship prebuilt indexes.
     allow_upload: bool = True
 

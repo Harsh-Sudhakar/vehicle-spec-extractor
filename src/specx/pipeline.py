@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import shutil
 import threading
 import time
@@ -18,6 +19,8 @@ from .ingest.chunk import build_chunks, file_hash
 from .query.extract import extract_specs
 from .query.retrieve import retrieve
 from .schema import DocInfo, QueryResult
+
+log = logging.getLogger(__name__)
 
 ProgressFn = Callable[[str, float], None]
 
@@ -39,6 +42,7 @@ def ingest(pdf_path: str | Path, filename: str | None = None, progress: Progress
     t0 = time.perf_counter()
     enable_ocr = s.enable_ocr if enable_ocr is None else enable_ocr
     chunks, stats = build_chunks(str(pdf_path), doc_id, enable_ocr=enable_ocr, progress=progress)
+    t_parsed = time.perf_counter()
 
     with pymupdf.open(str(pdf_path)) as doc:
         title = (doc.metadata or {}).get("title") or None
@@ -62,8 +66,12 @@ def ingest(pdf_path: str | Path, filename: str | None = None, progress: Progress
     with _cache_lock:
         for k in [k for k in _answers if k[0] == doc_id]:
             del _answers[k]
+    t_embed = time.perf_counter()
     index = DocIndex.build(info, chunks, progress=progress)
-    info.ingest_ms = round((time.perf_counter() - t0) * 1000)
+    done = time.perf_counter()
+    info.ingest_ms = round((done - t0) * 1000)
+    info.step_ms = {"parse_chunk": round((t_parsed - t0) * 1000), "embed_index": round((done - t_embed) * 1000)}
+    log.info("indexed %s: %d pages, %d chunks, %s ms", info.filename, info.pages, info.chunks, info.step_ms)
     index.info = info
     index.save()
 

@@ -116,3 +116,5 @@ class DocInfo(BaseModel):
     has_outline: bool = False
     title: str | None = None
     ingest_ms: float = 0
+    # per-step indexing time, e.g. {"parse_chunk": 3100, "embed": 5200} (ms)
+    step_ms: dict[str, float] = {}
