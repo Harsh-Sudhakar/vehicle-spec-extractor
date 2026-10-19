@@ -1,5 +1,5 @@
 # Render Blueprint: New → Blueprint → select this repo.
-# Free plan = 512 MB RAM, so the cross-encoder reranker and uploads are off
+# Free plan = 512 MB RAM, so the cross-encoder reranker is off and uploads are bounded
 # (eval with USE_RERANKER=false: 21/21, see eval/results_llm_no_rerank.md).
 services:
   - type: web
@@ -25,8 +25,14 @@ services:
       # fit in 512 MB
       - key: USE_RERANKER
         value: "false"
-      - key: ALLOW_UPLOAD
-        value: "false"
+      - key: ALLOW_UPLOAD          # private per visitor, capped, auto-deleted
+        value: "true"
+      - key: MAX_UPLOAD_PAGES
+        value: "150"
+      - key: MAX_UPLOAD_MB
+        value: "20"
+      - key: UPLOAD_TTL_HOURS
+        value: "6"
       - key: OPENROUTER_MODEL
         value: deepseek/deepseek-v4-flash
       - key: RATE_LIMIT_PER_MIN

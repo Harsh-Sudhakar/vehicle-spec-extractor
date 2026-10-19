@@ -148,7 +148,7 @@ src/specx/
   cli.py                `specx` command
 web/static/             UI (vanilla HTML/CSS/JS, no build step)
 eval/                   gold set + evaluation script
-tests/                  40 unit + integration tests on a generated PDF (no manual, model or network needed)
+tests/                  54 unit + integration tests on generated PDFs (no manual, model or network needed)
 ```
 
 ---
@@ -277,7 +277,7 @@ The set is small (21 questions over 2 manuals), so treat it as a regression chec
 
 ## Web UI
 
-* **Manuals library:** upload a PDF and watch Parse → Clean → Chunk → Embed progress. Each manual shows its structure source (outline or inferred) and how many TOC, image-only and blank pages were skipped.
+* **Manuals library:** upload a PDF (private to your browser, deleted after 6 h) and watch Parse → Clean → Chunk → Embed progress. Each manual shows its structure source (outline or inferred) and how many TOC, image-only and blank pages were skipped.
 * **Query console** with a **pipeline trace** showing real timings for retrieve / rerank / extract and how many candidates passed the grounding check.
 * **Results** as a readable Sheet or as the raw JSON output, a "4 required fields" toggle, and CSV / JSON export.
 * **Evidence panel:** for any spec, the value, the model's quote, the cited passage with the value marked, and the **rendered source page with the match highlighted**.
@@ -293,12 +293,17 @@ The repo ships a `Dockerfile` (FastAPI + UI, embedding models downloaded at buil
 
 
 * **Manual data stays private.** Manuals are copyrighted, so they are not in git. The prebuilt F-150 index (chunks, FAISS index, source PDF) lives in a *private* Hugging Face dataset and is downloaded at start-up (`HF_DATA_REPO` + a read-only `HF_TOKEN`). The 852-page manual is never re-indexed on the server.
-* **Fits in 512 MB.** The cross-encoder reranker is switched off (`USE_RERANKER=false`), and retrieval falls back to the RRF order. The eval still scores 21/21 that way ([`eval/results_llm_no_rerank.md`](eval/results_llm_no_rerank.md)). Peak memory measured with this configuration is about 350 MB. Uploads are off (`ALLOW_UPLOAD=false`) because indexing a large manual needs more CPU/RAM than the free plan has.
+* **Fits in 512 MB.** The cross-encoder reranker is switched off (`USE_RERANKER=false`), and retrieval falls back to the RRF order. The eval still scores 21/21 that way ([`eval/results_llm_no_rerank.md`](eval/results_llm_no_rerank.md)). Peak memory measured with this configuration is about 350 MB.
+* **Uploads are private and bounded.** Reviewers can upload their own PDF:
+  * **Private:** each upload is visible only to the browser that sent it. The browser keeps a random visitor id, and other visitors get a 404 for it, so they can't tell it exists. This separates visitors on a public demo; it is not authentication.
+  * **Bounded:** at most **150 pages / 20 MB**, checked by reading only the page count before any indexing, so a 600-page manual is rejected immediately with a clear message. One upload is indexed at a time, and each visitor can keep at most 2.
+  * **Temporary:** uploads are deleted after **6 hours** or with a ✕ in the UI.
+  * **Measured:** indexing a 150-page upload peaks at ~365 MB with these settings. That figure depends on embedding chunks one at a time: ONNX pads a batch to its longest text, so a batch of 16 cost ~330 MB more RAM *and* was slower (`EMBED_BATCH_SIZE`).
 * **Cold starts.** The free instance sleeps after 15 minutes idle, so the first visit takes about a minute to wake.
 
 To deploy your own: *Render → New → Blueprint →* select this repo, then enter `OPENROUTER_API_KEY` and `HF_TOKEN` when prompted. Any other Docker host works the same way. With 2 GB+ RAM, leave the reranker and uploads on.
 
-Configuration (env vars, see `.env.example`): `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `USE_RERANKER`, `ALLOW_UPLOAD`, `HF_DATA_REPO`, `HF_TOKEN`, `DEFAULT_DOC`, `DEFAULT_QUERY`, `ENABLE_OCR`, `MAX_UPLOAD_MB`, `RATE_LIMIT_PER_MIN`, `DATA_DIR`. Keys are read from the environment or a local `.env`, which is git-ignored. Never commit them.
+Configuration (env vars, see `.env.example`): `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `USE_RERANKER`, `EMBED_BATCH_SIZE`, `ALLOW_UPLOAD`, `MAX_UPLOAD_PAGES`, `MAX_UPLOADS_PER_VISITOR`, `UPLOAD_TTL_HOURS`, `HF_DATA_REPO`, `HF_TOKEN`, `DEFAULT_DOC`, `DEFAULT_QUERY`, `ENABLE_OCR`, `MAX_UPLOAD_MB`, `RATE_LIMIT_PER_MIN`, `DATA_DIR`. Keys are read from the environment or a local `.env`, which is git-ignored. Never commit them.
 
 > Locally, any PDF placed in `data/` is indexed automatically when the server starts.
 

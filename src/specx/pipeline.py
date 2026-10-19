@@ -39,6 +39,11 @@ def ingest(pdf_path: str | Path, filename: str | None = None, progress: Progress
     t0 = time.perf_counter()
     enable_ocr = s.enable_ocr if enable_ocr is None else enable_ocr
     chunks, stats = build_chunks(str(pdf_path), doc_id, enable_ocr=enable_ocr, progress=progress)
+    if not chunks:
+        raise ValueError(
+            "No text could be extracted from this PDF. It may be a scanned document - "
+            "this pipeline reads text-based PDFs (OCR is an optional local setting)."
+        )
 
     with pymupdf.open(str(pdf_path)) as doc:
         title = (doc.metadata or {}).get("title") or None
@@ -92,6 +97,23 @@ def load_index(doc_id: str) -> DocIndex:
 
 def source_pdf(doc_id: str) -> Path:
     return DocIndex.dir_for(doc_id) / "source.pdf"
+
+
+def save_info(info: DocInfo) -> None:
+    """Persist updated metadata (e.g. upload owners) and keep the in-memory copy in sync."""
+    DocIndex.write_info(info)
+    with _cache_lock:
+        if info.doc_id in _cache:
+            _cache[info.doc_id].info = info
+
+
+def forget(doc_id: str) -> None:
+    """Delete a document's index, source PDF and cached answers."""
+    with _cache_lock:
+        _cache.pop(doc_id, None)
+        for k in [k for k in _answers if k[0] == doc_id]:
+            del _answers[k]
+    DocIndex.delete(doc_id)
 
 
 _answers: "OrderedDict[tuple, QueryResult]" = OrderedDict()

@@ -26,9 +26,21 @@
     busy: false,
   };
 
+  // ----------------------------------------------------------------- visitor id
+  // Random per-browser id; the server shows each visitor only their own uploads.
+  const VISITOR = (() => {
+    let v = store.get("specx-visitor");
+    if (!v || !/^[A-Za-z0-9-]{8,64}$/.test(v)) {
+      v = (crypto.randomUUID && crypto.randomUUID()) || `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+      store.set("specx-visitor", v);
+    }
+    return v;
+  })();
+  const withVisitor = (url) => `${url}${url.includes("?") ? "&" : "?"}v=${encodeURIComponent(VISITOR)}`;
+
   // ----------------------------------------------------------------- utils
   async function api(path, opts = {}) {
-    const res = await fetch(path, opts);
+    const res = await fetch(path, { ...opts, headers: { ...(opts.headers || {}), "X-SpecX-Visitor": VISITOR } });
     if (!res.ok) {
       let msg = `${res.status} ${res.statusText}`;
       try { const j = await res.json(); if (j.detail) msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); } catch {}
@@ -85,7 +97,7 @@
       $("#traceModel").textContent = h.llm ? h.model.split("/").pop() : "rule-based";
       $("#embedModel").textContent = h.embed_model.split("/").pop();
       $("#rerankModel").textContent = h.rerank_model.split("/").pop();
-      $("#maxMb").textContent = h.max_upload_mb;
+      $("#maxMb").textContent = h.max_upload_pages ? `${h.max_upload_pages} pages / ${h.max_upload_mb} MB` : `${h.max_upload_mb} MB`;
       $("#dropzone").hidden = h.allow_upload === false;
       if (h.reranker === false) $('#trace li[data-step="rerank"] span').textContent = "off (RRF order)";
     } catch {
@@ -124,11 +136,31 @@
           ${d.has_outline ? `<span class="doc-badge">outline</span>` : `<span class="doc-badge">inferred headings</span>`}
           ${skipped ? `<span class="doc-badge" title="TOC/index, image-only or blank pages">${skipped} skipped</span>` : ""}
         </span>
-      </button></li>`;
+        <span class="doc-owner">${d.kind === "upload"
+          ? `<span class="own mine">Your upload</span>${d.expires_at ? `<span>deleted ${esc(untilText(d.expires_at))}</span>` : ""}`
+          : `<span class="own">Demo manual</span>`}</span>
+      </button>${d.kind === "upload" ? `<button class="doc-del" data-del="${esc(d.doc_id)}" title="Delete this upload" aria-label="Delete ${esc(d.filename)}">✕</button>` : ""}</li>`;
     }).join("");
   }
 
-  $("#docs").addEventListener("click", (e) => {
+  function untilText(iso) {
+    const mins = Math.max(0, Math.round((new Date(iso) - Date.now()) / 60000));
+    return mins >= 90 ? `in ${Math.round(mins / 60)} h` : mins > 0 ? `in ${mins} min` : "soon";
+  }
+
+  $("#docs").addEventListener("click", async (e) => {
+    const del = e.target.closest("[data-del]");
+    if (del) {
+      const d = state.docs.find((x) => x.doc_id === del.dataset.del);
+      if (!d || !confirm(`Delete your upload "${d.filename}"?`)) return;
+      try {
+        await api(`/api/documents/${encodeURIComponent(d.doc_id)}`, { method: "DELETE" });
+        if (state.doc?.doc_id === d.doc_id) state.doc = null;
+        toast(`Deleted ${d.filename}`);
+        loadDocs();
+      } catch (err) { toast(err.message); }
+      return;
+    }
     const b = e.target.closest(".doc");
     if (b) selectDoc(b.dataset.id);
   });
@@ -158,7 +190,7 @@
     parse: "Reading tables first, then prose outside them.",
     clean: "Learning running headers, footers and TOC pages.",
     chunk: "Building table-row and heading-bounded chunks.",
-    embed: "Embedding chunks and building FAISS + BM25 indexes.",
+    embed: "Embedding chunks and building FAISS + BM25 indexes (a few minutes per 100 pages on the free demo server).",
     done: "Indexed.",
   };
 
@@ -173,7 +205,8 @@
     const fd = new FormData();
     fd.append("file", file);
     try {
-      const { job_id } = await api("/api/documents", { method: "POST", body: fd });
+      const { job_id, pages } = await api("/api/documents", { method: "POST", body: fd });
+      if (pages) $("#ingestFile").textContent = `${file.name} · ${pages} pp`;
       pollJob(job_id);
     } catch (e) {
       box.classList.add("error");
@@ -337,7 +370,7 @@
       const others = state.docs.filter((d) => d.doc_id !== state.doc?.doc_id);
       const note = r.note
         ? `<div class="ref-note"><span class="ref-tag">Manual says</span><p>${esc(r.note.text)}</p>
-             <a href="/api/documents/${esc(state.doc.doc_id)}/source.pdf#page=${r.note.page}" target="_blank" rel="noopener">p.${r.note.page} ↗</a></div>`
+             <a href="${withVisitor(`/api/documents/${esc(state.doc.doc_id)}/source.pdf`)}#page=${r.note.page}" target="_blank" rel="noopener">p.${r.note.page} ↗</a></div>`
         : "";
       box.innerHTML = `<div class="none">
         <strong>No value for this in <span class="mono">${name}</span></strong>
@@ -457,7 +490,7 @@
     const docId = state.doc.doc_id;
     const hl = [s.source_quote, s.component, String(s.value).length >= 3 ? s.value : null]
       .filter(Boolean).map((x) => `hl=${encodeURIComponent(String(x).slice(0, 120))}`).join("&");
-    const img = s.page ? `/api/documents/${docId}/pages/${s.page}.png?${hl}` : null;
+    const img = s.page ? withVisitor(`/api/documents/${docId}/pages/${s.page}.png?${hl}`) : null;
 
     $("#evBody").innerHTML = `
       <div>
@@ -480,7 +513,7 @@
       ${c ? `<p class="sub">Cited passage</p><blockquote class="quote">${markValue(c.text, s.value)}</blockquote>` : ""}
       ${img ? `<p class="sub">Source page</p><div class="page-frame loading"><span class="pf-label">PAGE ${esc(s.page)}</span><img alt="Manual page ${esc(s.page)} with the specification highlighted" src="${img}"></div>` : ""}
       <div class="ev-links">
-        ${s.page ? `<a href="/api/documents/${docId}/source.pdf#page=${s.page}" target="_blank" rel="noopener">Open PDF at p.${esc(s.page)} ↗</a>` : ""}
+        ${s.page ? `<a href="${withVisitor(`/api/documents/${docId}/source.pdf`)}#page=${s.page}" target="_blank" rel="noopener">Open PDF at p.${esc(s.page)} ↗</a>` : ""}
       </div>`;
     const imgEl = $("#evBody img");
     if (imgEl) {

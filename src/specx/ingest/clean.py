@@ -64,7 +64,8 @@ class DocCleaner:
 
     @staticmethod
     def is_blank(page: PageContent) -> bool:
-        return page.text_chars < 50 and page.image_count == 0 and not page.tables
+        # Truly empty pages only: one short sentence ("Tighten to 20 Nm.") can be a spec.
+        return page.text_chars < 15 and page.image_count == 0 and not page.tables
 
     # ---- line cleaning -------------------------------------------------------
     def is_noise(self, line: Line, page: PageContent) -> bool:

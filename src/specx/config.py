@@ -21,8 +21,15 @@ class Settings(BaseSettings):
 
     # The cross-encoder adds ~150-300 MB of RAM; turn it off on 512 MB hosts (e.g. Render free).
     use_reranker: bool = True
-    # Ingesting big manuals needs CPU/RAM a small host lacks; demos can ship prebuilt indexes.
+    embed_batch_size: int = 1
+
+    # Uploads from the web UI. Each upload is private to the browser that sent it, limited in
+    # size/pages so indexing fits a small host, and deleted after a few hours. Manuals indexed
+    # with the CLI or placed in data/ are shared "demo" manuals and have no such limits.
     allow_upload: bool = True
+    max_upload_pages: int = 150          # 0 = no limit
+    upload_ttl_hours: float = 6          # 0 = keep forever
+    max_uploads_per_visitor: int = 2     # 0 = no limit
 
     # Retrieval sizes
     dense_k: int = 25
@@ -37,7 +44,7 @@ class Settings(BaseSettings):
     enable_ocr: bool = False
 
     # Web app limits
-    max_upload_mb: int = 60
+    max_upload_mb: int = 20
     rate_limit_per_min: int = 20
 
     # Optional: prebuilt indexes (+ source PDFs) kept in a private Hugging Face dataset, pulled
